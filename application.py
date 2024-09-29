@@ -40,5 +40,12 @@ def signup():
     return "Operation successful", 200
 
 
+@app.route('/preference', methods = ['POST'])
+def submit_user_pref():
+    res = request.form
+    # TODO Change the dict key to the actual values used in the front end submit form
+    # user_id
+    # food_id
+
 if __name__ == '__main__':
     app.run(debug=True)

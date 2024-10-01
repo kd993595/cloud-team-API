@@ -2,8 +2,25 @@ from fastapi import FastAPI, HTTPException, Response, status
 from pydantic import BaseModel
 import os, uuid
 import mysql.connector
+from fastapi.middleware.cors import CORSMiddleware
+
 
 app = FastAPI()
+
+# List of allowed origins (domains that can make requests)
+origins = [
+    "http://localhost:3000",  # If your frontend runs on localhost:3000 (e.g., React app)
+    "https://yourfrontend.com",  # Replace with your frontend domain
+]
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # Origins that are allowed to access your API
+    allow_credentials=True,  # Allow cookies and authentication
+    allow_methods=["*"],  # Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
+    allow_headers=["*"],  # Allow all headers (authorization, content-type, etc.)
+)
 
 # Define the Pydantic model for request validation
 class Preference(BaseModel):

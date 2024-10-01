@@ -1,28 +1,25 @@
-from dns.asyncresolver import resolve
-from flask import  Flask, request
-import bcrypt
-import mysql.connector
+from fastapi import FastAPI, HTTPException, Response, status
+from pydantic import BaseModel
 import os, uuid
-app = Flask(__name__)
+import mysql.connector
+
+app = FastAPI()
+
+# Define the Pydantic model for request validation
+class Preference(BaseModel):
+    preference_id: int
+    user_id: int
+    food_id: int
+
+class User(BaseModel):
+    user_id: int
 
 
-@app.route('/')
-def home():
-    return 'Welcome to the Seven SEAS API'
-
-@app.route('/signup', methods = ['POST'])
-def signup():
-    res = request.form
-    #TODO Change the dict key to the actual values used in the front end submit form
-    #TODO verify email is in a valid format
-    user_email = res['user_email']
-    user_password = res['password']
-    salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(user_password.encode('utf-8'), salt)
-
+@app.post("/addPref")
+async def add_pref(pref: Preference, response: Response):
     try:
         conn = mysql.connector.connect(
-            #TODO use env var in AWS for security
+            # TODO use env var in AWS for security
             host=os.getenv('db_uri'),
             user=os.getenv('db_username'),
             password=os.getenv('db_password'),
@@ -30,22 +27,38 @@ def signup():
         )
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO user (user_id, password, email)
-            VALUES (%s, %s, %s)
-        ''', (uuid.uuid4(), hashed_password, user_email))
+               INSERT INTO preference (preference_id, user_id, food_id)
+               VALUES (%s, %s, %s)
+           ''', (pref.preference_id, pref.user_id, pref.food_id))
         conn.commit()
         conn.close()
+
+        response.status_code = status.HTTP_201_CREATED
+        return {"message": "Preference created successfully"}
     except:
-        return "Operation Failed", 500
-    return "Operation successful", 200
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": "Preference creation unsuccessful"}
 
+@app.post("/getPref")
+async def get_pref(user: User, response: Response):
+    try:
+        conn = mysql.connector.connect(
+            # TODO use env var in AWS for security
+            host=os.getenv('db_uri'),
+            user=os.getenv('db_username'),
+            password=os.getenv('db_password'),
+            database=os.getenv('db_name')
+        )
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM preference WHERE user_id = %s', (user.user_id,))
+        results = cursor.fetchall()
+        conn.close()
+        response.status_code = status.HTTP_200_OK
+        return {"message": "Preference retrieved successfully", "data": results}
+    except:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": "Database Query unsuccessful"}
 
-@app.route('/preference', methods = ['POST'])
-def submit_user_pref():
-    res = request.form
-    # TODO Change the dict key to the actual values used in the front end submit form
-    # user_id
-    # food_id
-
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

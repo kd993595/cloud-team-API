@@ -1,11 +1,12 @@
 from dns.asyncresolver import resolve
 from flask import  Flask, request
+from flask_cors import CORS
 import bcrypt
 import mysql.connector
 import os, uuid
+
 app = Flask(__name__)
-
-
+CORS(app)
 @app.route('/')
 def home():
     return 'Welcome to the Seven SEAS API'

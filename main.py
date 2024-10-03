@@ -4,7 +4,9 @@ import os, uuid
 import mysql.connector
 from fastapi.middleware.cors import CORSMiddleware
 
-
+os.environ['db_uri'] = ''
+os.environ['db_username'] = ''
+os.environ['db_password'] = ''
 app = FastAPI()
 
 # List of allowed origins (domains that can make requests)
@@ -31,6 +33,20 @@ class Preference(BaseModel):
 class User(BaseModel):
     user_id: int
 
+@app.get("/")
+async def home():
+    try:
+        conn = mysql.connector.connect(
+            # TODO use env var in AWS for security
+            host=os.getenv('db_uri'),
+            user=os.getenv('db_username'),
+            password=os.getenv('db_password'),
+            # database=os.getenv('db_name')
+        )
+        conn.close()
+        return {"message": "DB Connected!"}
+    except:
+        return {"message": "Cannot Access DB"}
 
 @app.post("/addPref")
 async def add_pref(pref: Preference, response: Response):
@@ -40,7 +56,7 @@ async def add_pref(pref: Preference, response: Response):
             host=os.getenv('db_uri'),
             user=os.getenv('db_username'),
             password=os.getenv('db_password'),
-            database=os.getenv('db_name')
+            # database=os.getenv('db_name')
         )
         cursor = conn.cursor()
         cursor.execute('''

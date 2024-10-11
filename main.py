@@ -11,7 +11,7 @@ app = FastAPI()
 
 # List of allowed origins (domains that can make requests)
 origins = [
-    "http://localhost:3000",  # If your frontend runs on localhost:3000 (e.g., React app)
+    "http://localhost:8000",  # If your frontend runs on localhost:3000 (e.g., React app)
     "https://yourfrontend.com",  # Replace with your frontend domain
 ]
 
